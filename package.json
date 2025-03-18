@@ -2,10 +2,10 @@
   "name": "modules_merchand",
   "version": "1.0.0",
   "description": "API para la gestión de módulos por dominio.",
-  "main": "src/index.js",
+  "main": "server.js",
   "scripts": {
-    "start": "node src/index.js",
-    "dev": "nodemon src/index.js"
+    "start": "node server.js",
+    "dev": "nodemon server.js"
   },
   "keywords": ["API", "Modules", "Merchandising", "Node.js", "MongoDB"],
   "author": "Tu Nombre",
