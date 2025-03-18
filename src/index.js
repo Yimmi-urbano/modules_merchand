@@ -1,9 +1,8 @@
 const express = require("express");
 const cors = require("cors");
-const dotenv = require('dotenv');
+require("dotenv").config();
 const connectDB = require("./config/db");
 const moduleRoutes = require("./routes/moduleRoutes");
-dotenv.config();
 
 const app = express();
 const PORT = process.env.PORT || 5200;
@@ -13,6 +12,13 @@ app.use(cors());
 
 // Conectar a la base de datos
 connectDB();
+
+console.log("📌 Variables de entorno cargadas:");
+console.log("PORT:", process.env.PORT);
+console.log("MONGO_URI:", process.env.MONGO_URI ? "✅ Configurada" : "❌ No configurada");
+console.log("NODE_ENV:", process.env.NODE_ENV || "development");
+console.log("CUSTOM_VARIABLE:", process.env.CUSTOM_VARIABLE || "No definida");
+
 
 // Rutas
 app.use("/modules", moduleRoutes);
