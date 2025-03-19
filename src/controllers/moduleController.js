@@ -1,10 +1,33 @@
 const Module = require("../models/Module");
+const CentralModule = require("../models/CentralModule"); // Asegúrate de importar el modelo correcto
 
 // 📌 Listar módulos por dominio
+
+// 📌 Listar módulos por dominio con merge de datos desde central_modules
 exports.getModules = async (req, res) => {
   try {
+    // Obtener los módulos específicos del dominio
     const modules = await Module.find({ domain: req.domain });
-    res.json(modules);
+
+    // Obtener los módulos centrales con los mismos nameId
+    const nameIds = modules.map(mod => mod.nameId);
+    const centralModules = await CentralModule.find({ nameId: { $in: nameIds } });
+
+    // Crear un mapa de los módulos centrales por nameId
+    const centralMap = centralModules.reduce((acc, mod) => {
+      acc[mod.nameId] = mod;
+      return acc;
+    }, {});
+
+    // Fusionar los datos del módulo del dominio con el módulo central
+    const mergedModules = modules.map(mod => ({
+      ...mod.toObject(),
+      logo: centralMap[mod.nameId]?.logo,
+      title_module:  centralMap[mod.nameId]?.title_module,
+      description: centralMap[mod.nameId]?.description,
+    }));
+
+    res.json(mergedModules);
   } catch (error) {
     res.status(500).json({ message: `Error al obtener módulos: ${error.message}` });
   }
@@ -13,9 +36,9 @@ exports.getModules = async (req, res) => {
 // 📌 Crear un módulo
 exports.createModule = async (req, res) => {
   try {
-    const { title_module, nameId, type_module, type_active, logo, description } = req.body;
+    const { nameId, version } = req.body;
     
-    if (!title_module || !nameId || !type_module || !type_active || !logo || !description) {
+    if (!version || !nameId ) {
       return res.status(400).json({ message: "Error: Todos los campos son obligatorios." });
     }
 
@@ -25,7 +48,7 @@ exports.createModule = async (req, res) => {
       return res.status(400).json({ message: `Error: Ya existe un módulo con nameId '${nameId}' en el dominio '${req.domain}'.` });
     }
 
-    const newModule = new Module({ domain: req.domain, title_module, nameId, type_module, type_active, logo, description });
+    const newModule = new Module({ domain: req.domain, nameId, version  });
     await newModule.save();
 
     res.status(201).json({ message: "Éxito: Módulo creado correctamente.", module: newModule });
@@ -37,9 +60,9 @@ exports.createModule = async (req, res) => {
 // 📌 Actualizar un módulo
 exports.updateModule = async (req, res) => {
   try {
-    const { title_module, nameId, type_module, type_active, logo, description } = req.body;
+    const { nameId, version } = req.body;
 
-    if (!title_module || !nameId || !type_module || !type_active || !logo || !description) {
+    if (!version || !nameId ) {
       return res.status(400).json({ message: "Error: Todos los campos son obligatorios." });
     }
 
@@ -51,7 +74,7 @@ exports.updateModule = async (req, res) => {
 
     const updatedModule = await Module.findOneAndUpdate(
       { _id: req.params.id, domain: req.domain },
-      { title_module, nameId, type_module, type_active, logo, description },
+      { version, nameId },
       { new: true }
     );
 
